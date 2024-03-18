@@ -1,43 +1,57 @@
-1. 涵盖使原型独特的元素，涵盖从最初的想法到最终产品的开发过程。
+# COMP3015-C1 scene project development documents
 
-初步想法是制作一个海岛场景，包括沙滩，海水和小屋，以及海豚，考虑到让人有舒适宜人的感觉，选择了Low Poly风格以及偏向于卡通风格的着色。
+## Development environment
 
-2. 重点讨论阴影模型，使用的照明和网格的纹理操作。
+- **IDE:** Visual Studio 2022
 
-这个项目中实现了基于顶点着色器的Flat Shading以及基于像素着色的Gouraud Shading。其中包含漫反射(Diffuse), 镜面反射(Specular)，反射模型使用了Blinn-Phong。
+## Technical implementation overview
 
-同时项目支持带纹理的obj模型的加载和渲染。
+The project uses a variety of technologies to achieve a dynamic 3D island scene, including dynamic lighting, skybox background, and texture mapping of 3D models.
 
-Flat Shading是一种简单的着色算法，它将整个面片的颜色设置为该面片的一个顶点处计算得出的颜色。这种算法适用于在需要简单而快速绘制的场景下，但由于色彩的不连续性可能会导致视觉上的硬边缘。
+## Technologies and Models
 
-Gouraud Shading则是一种更加精细的算法，它通过在每个顶点处计算光照值，并在顶点之间进行插值来获得每个像素的颜色值。这种算法可以产生更加平滑的结果，并且通常在需要更高视觉质量的场景下使用。
+### Shader model
 
-纹理映射是一种将二维图像映射到三维表面上的技术，可以为物体表面增加细节和真实感。在纹理映射中，图像被映射到物体表面的每个顶点上，并通过插值来确定每个像素的颜色。这可以使表面看起来更加细致和逼真。
+- **Diffuse (Key-1):** Basic diffuse reflection model, used to simulate the color of an object when a light source directly illuminates it.
+- **Specular (Key-2):** Specular reflection model, used to simulate bright spots caused by light source reflection.
+- **Toon Shading (Key-4):** Toon shading, which produces segmented color effects and adds a visual cartoon style.
+- **Gouraud Shading (Key-5):** A smoothing algorithm for vertex shading that achieves smooth transitions by interpolating vertex lighting.
+- **Flat Shading (Key-6):** Simple algorithm for patch shading, giving each patch a single color.
+- **Fog (Key-6):** Fog effect, simulating the visual effects produced by depth and distance.
 
-在项目中实现纹理映射可以通过加载纹理图像，并在顶点着色器或像素着色器中进行纹理坐标的插值来实现。通过将纹理映射与漫反射和镜面反射相结合，可以使渲染的物体表面看起来更加真实，并增加视觉质量。
+### Lighting model
 
-3. 着色器代码部分 
+- **Blinn-Phong Illumination Model:** is used to simulate the impact of lighting on objects, including diffuse reflection and specular reflection.
+- **Spot Light (Key-3):** Spotlight lighting can simulate the direction and range of the light source.
 
-本着色器(model_loading.vert/model_loading.frag)实现了基于像素着色的渲染效果，包括漫反射、镜面反射以及光照效果。在渲染过程中，使用了纹理映射以及多光源的光照计算。
+### control
 
-首先，根据是否开启Flat Shading，决定使用简单着色算法或者基于顶点法线插值的着色算法。在后者的情况下，计算了来自三个不同光源的漫反射和镜面反射贡献，并根据观察向量和光线方向计算了光照效果。
+- **Mouse:** Control the viewing angle direction.
+- **Keyboard:** Control movement direction and height.
+- **Space:** controls animation.
+### Dynamic lighting
 
-如果开启了Toon Shading，调用了自定义的toonShading函数，根据光照强度实现卡通风格的阴影效果。此外，还实现了Spotlight效果，根据内外切角度和光线方向计算出光源的模拟软边缘效果。
+- Dynamic lighting effects are achieved by dynamically updating light source parameters in the shader.
+- Lighting includes ambient light, diffuse reflection, and specular reflection, which are calculated through shaders.
 
-最后，根据是否开启雾化效果，根据物体与相机的距离计算出雾化因子，将雾化因子应用于渲染结果中，实现了雾化效果。
+### Skybox background
 
-通过这段着色器代码，可以实现丰富多彩的渲染效果，包括多光源计算、纹理映射、Toon Shading效果和雾化效果
+- Create a skybox using a cube texture to provide an ambient background for the scene.
+- The skybox is drawn at the end of the rendering process, ensuring it appears as the background.
 
-4. 介绍天空盒子
+### Texture sampling
 
-项目中实现天空盒的过程如下：
+- Texture data is loaded through the `stbi_load` function, and OpenGL functions are used to create and bind the texture.
+- Texture coordinates in shaders are used to sample color values from texture images.
 
-1.创建一个以观察者为中心的立方体盒子，并确保盒子内的纹理在无缝连接的情况下正确地拼接。
-2.将天空盒上的纹理贴图(Cubemap)映射到立方体盒子的内表面，使观察者在任何方向都看到一致的环境景物。
-3.根据观察者的视角实时更新天空盒的位置和大小，使其保持对观察者的相对固定位置(消除视图矩阵的平移部分)，形成一种远景背景效果。
+## Citations and technical sources
 
-5. 在开发过程随便提三个问题 以及如何解决的问题。
+This project is based on OpenGL and standard practices in graphics programming and relies on the following libraries:
 
-1.聚光灯的边界很生硬。解决方法是模拟真实的聚光灯，使用一个内角和一个外角来计算聚光灯的影响范围。
-2.光照视觉效果不对，感觉反过来了。解决办法是修正光源方向(光源方向指的是顶点到光源的方向，而不是光线行进的方向)。
-3.对物体进行非等比缩放之后，物体的着色变得奇怪(特别是高光部分)。解决办法是对法线进行逆转转置变换，保证非等比缩放之后，法线仍然垂直于表面。
+- **OpenGL**: Core graphics API for 3D graphics rendering.
+- **GLFW**: Provides window management and user input processing.
+- **GLEW**: Manages OpenGL extensions, allowing the use of more advanced OpenGL features.
+- **GLM**: Mathematical operation library, supporting mathematical operations such as matrices and vectors.
+- **Assimp**: 3D model import library, supporting model loading in multiple formats.
+- **SOIL**: Simple OpenGL graphics library for loading and creating textures.
+- **stb_image**: Texture loading library, supports texture creation in multiple image formats.
